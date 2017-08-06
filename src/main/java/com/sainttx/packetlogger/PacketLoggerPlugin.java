@@ -54,33 +54,36 @@ public class PacketLoggerPlugin extends JavaPlugin {
             if (!isBeingTracked(target)) {
                 sender.sendMessage(target.getName() + " is not being logged");
             } else {
-                List<String> packets = getPacketLog(target);
-                File output = new File(getDataFolder(), "dump-" + target.getName() + ".txt");
-                try {
-                    if (!getDataFolder().exists()) {
-                        getDataFolder().mkdirs();
-                    }
-                    if (!output.exists()) {
-                        output.createNewFile();
+                sender.sendMessage("Writing packet dump...");
+                getServer().getScheduler().runTaskAsynchronously(this, () -> {
+                    List<String> packets = getPacketLog(target);
+                    File output = new File(getDataFolder(), "dump-" + target.getName() + ".txt");
+                    try {
+                        if (!getDataFolder().exists()) {
+                            getDataFolder().mkdirs();
+                        }
+                        if (!output.exists()) {
+                            output.createNewFile();
+                        }
+
+                        try (FileWriter writer = new FileWriter(output, false)) {
+                            for (String packet : packets) {
+                                writer.write(packet);
+                            }
+                        }
+
+                        sender.sendMessage("Successfully dumped the packet log of " + target.getName() + " to " + output.getAbsolutePath());
+                    } catch (IOException e) {
+                        sender.sendMessage("An error occured when dumping the packet log of " + target.getName());
+                        getLogger().log(Level.SEVERE, "dumping packets", e);
+                        return;
                     }
 
-                    try (FileWriter writer = new FileWriter(output, false)) {
-                        for (String packet : packets) {
-                            writer.write(packet);
-                        }
-                    }
-                    
-                    sender.sendMessage("Successfully dumped the packet log of " + target.getName() + " to " + output.getAbsolutePath());
-                } catch (IOException e) {
-                    sender.sendMessage("An error occured when dumping the packet log of " + target.getName());
-                    getLogger().log(Level.SEVERE, "dumping packets", e);
-                    return true;
-                }
-                
-                target.removeMetadata(INTERCEPTING_PACKETS_META, this);
-                sender.sendMessage("No longer tracking the packets of " + target.getName());
+                    target.removeMetadata(INTERCEPTING_PACKETS_META, this);
+                    sender.sendMessage("No longer tracking the packets of " + target.getName());
+                });
+                return true;
             }
-            return true;
         } else if (args[0].equalsIgnoreCase("clear")) {
             if (!isBeingTracked(target)) {
                 sender.sendMessage(target.getName() + " is not being logged");
