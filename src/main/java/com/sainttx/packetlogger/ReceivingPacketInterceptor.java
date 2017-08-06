@@ -50,29 +50,32 @@ public class ReceivingPacketInterceptor extends PacketAdapter {
             getPlugin().getLogger().log(Level.SEVERE, "failed to save packet information", e);
             return;
         }
-        
+
         String output = packetInformation.toString();
         getPlugin().getPacketLog(player).add(output);
     }
-    
+
     // Recursively prints packet fields and any superclass fields
     private void dumpPacket(Class<?> packetClass, Object packet, StringBuilder packetInformation, String indent) {
-        Field[] fields = packetClass.getDeclaredFields();
-        if (fields.length > 0) {
-            packetInformation.append(indent).append(packetClass.getSimpleName()).append('\n');
-            try {
-                for (Field declaredField : fields) {
-                    declaredField.setAccessible(true);
-                    Object value = declaredField.get(packet);
-                    packetInformation.append(indent).append("  ")
-                            .append(declaredField.getName()).append('=').append(value)
-                            .append('\n');
-                }
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
+        if (packetClass == Object.class) {
+            return;
         }
         
+        packetInformation.append(indent).append(packetClass.getSimpleName()).append('\n');
+        Field[] fields = packetClass.getDeclaredFields();
+
+        try {
+            for (Field declaredField : fields) {
+                declaredField.setAccessible(true);
+                Object value = declaredField.get(packet);
+                packetInformation.append(indent).append("  ")
+                        .append(declaredField.getName()).append('=').append(value)
+                        .append('\n');
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+
         if (packetClass.getSuperclass() != null) {
             dumpPacket(packetClass.getSuperclass(), packet, packetInformation, indent + "  ");
         }
