@@ -23,6 +23,7 @@ public class PacketLoggerPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         ProtocolLibrary.getProtocolManager().addPacketListener(new ReceivingPacketInterceptor(this));
+        ProtocolLibrary.getProtocolManager().addPacketListener(new OutgoingPacketInterceptor(this));
     }
     
     @Override
